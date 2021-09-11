@@ -161,10 +161,10 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
 
     num_dets_to_consider = min(args.top_k, classes.shape[0])
 
-    print(f"Classes:\t{classes}")
+    print(f"Classes:\t{classes} :: {type(classes)} :: {list(classes)}")
     print(f"Class Names:\t{[cfg.dataset.class_names[classes[j]] for j in range(num_dets_to_consider)]}")
-    print(f"Scores:\t{scores}")
-    print(f"Boxes:\t{boxes}")
+    print(f"Scores:\t{scores} :: {type(scores)} :: {list(scores)}")
+    print(f"Boxes:\t{boxes} :: {type(boxes)} :: {list(boxes)}")
 
     for j in range(num_dets_to_consider):
         if scores[j] < args.score_threshold:

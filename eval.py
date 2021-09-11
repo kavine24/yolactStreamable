@@ -160,6 +160,12 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
         classes, scores, boxes = [x[idx].cpu().numpy() for x in t[:3]]
 
     num_dets_to_consider = min(args.top_k, classes.shape[0])
+
+    print(f"Classes:\t{classes}")
+    print(f"Class Names:\t{[cfg.dataset.class_names[classes[j]] for j in range(num_dets_to_consider)]}")
+    print(f"Scores:\t{scores}")
+    print(f"Boxes:\t{boxes}")
+
     for j in range(num_dets_to_consider):
         if scores[j] < args.score_threshold:
             num_dets_to_consider = j

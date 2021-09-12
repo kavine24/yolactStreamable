@@ -114,9 +114,12 @@ def parse_args(argv=None):
     parser.add_argument('--emulate_playback', default=False, dest='emulate_playback', action='store_true',
                         help='When saving a video, emulate the framerate that you\'d get running in real-time mode.')
 
+    parser.add_argument('--save_detection_json', default=False, dest='save_detection_json', action='store_true',
+                        help='Store a json file alongside output image individually with classes, class names, scores and bounding box info')
+
     parser.set_defaults(no_bar=False, display=False, resume=False, output_coco_json=False, output_web_json=False, shuffle=False,
                         benchmark=False, no_sort=False, no_hash=False, mask_proto_debug=False, crop=True, detect=False, display_fps=False,
-                        emulate_playback=False)
+                        emulate_playback=False, save_detection_json=False)
 
     global args
     args = parser.parse_args(argv)
@@ -132,7 +135,7 @@ coco_cats = {} # Call prep_coco_cats to fill this
 coco_cats_inv = {}
 color_cache = defaultdict(lambda: {})
 
-def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, mask_alpha=0.45, fps_str=''):
+def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, mask_alpha=0.45, fps_str='', json_save_path=""):
     """
     Note: If undo_transform=False then im_h and im_w are allowed to be None.
     """
@@ -161,15 +164,15 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
 
     num_dets_to_consider = min(args.top_k, classes.shape[0])
 
-    print(f"Classes:\t{classes.tolist()}")
-    print(f"Class Names:\t{[cfg.dataset.class_names[classes[j]] for j in range(num_dets_to_consider)]}")
-    print(f"Scores:\t{scores.tolist()}")
-    print(f"Boxes:\t{boxes.tolist()}")
-
     for j in range(num_dets_to_consider):
         if scores[j] < args.score_threshold:
             num_dets_to_consider = j
             break
+
+    # print(f"Classes:\t{classes.tolist()}")
+    # print(f"Class Names:\t{[cfg.dataset.class_names[classes[j]] for j in range(num_dets_to_consider)]}")
+    # print(f"Scores:\t{scores.tolist()}")
+    # print(f"Boxes:\t{boxes.tolist()}")
 
     # Quick and dirty lambda for selecting the color for a particular index
     # Also keeps track of a per-gpu color cache for maximum speed
@@ -238,6 +241,21 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
     
     if num_dets_to_consider == 0:
         return img_numpy
+
+    if args.save_detection_json and json_save_path != "":
+        detection_dict = {"classes": [], "class_names": [], "scores": [], "boxes": []}
+        detection_dict["classes"] = []
+
+        for j in range(num_dets_to_consider):
+            detection_dict["classes"].append(classes.tolist()[j])
+            detection_dict["class_names"].append(cfg.dataset.class_names[classes[j]])
+            detection_dict["scores"].append(scores.tolist()[j])
+            detection_dict["boxes"].append(boxes.tolist()[j])
+
+        with open(json_save_path, "w") as outfd:
+            json.dump(detection_dict, outfd, indent=4)
+
+
 
     if args.display_text or args.display_bboxes:
         for j in reversed(range(num_dets_to_consider)):
@@ -603,7 +621,7 @@ def evalimage(net:Yolact, path:str, save_path:str=None):
     batch = FastBaseTransform()(frame.unsqueeze(0))
     preds = net(batch)
 
-    img_numpy = prep_display(preds, frame, None, None, undo_transform=False)
+    img_numpy = prep_display(preds, frame, None, None, undo_transform=False, json_save_path="" if save_path == None else f"{save_path}.json")
     
     if save_path is None:
         img_numpy = img_numpy[:, :, (2, 1, 0)]

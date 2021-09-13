@@ -252,8 +252,9 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
             detection_dict["scores"].append(scores.tolist()[j])
             detection_dict["boxes"].append(boxes.tolist()[j])
 
-        with open(json_save_path, "w") as outfd:
-            json.dump(detection_dict, outfd, indent=4)
+        if args.image is not None or args.images is not None:
+            with open(json_save_path, "w") as outfd:
+                json.dump(detection_dict, outfd, indent=4)
 
 
 

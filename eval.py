@@ -652,7 +652,7 @@ def evalimages(net:Yolact, input_folder:str, output_folder:str):
     print('Done.')
 
 from multiprocessing.pool import ThreadPool
-import multiprocessing
+import threading
 from queue import Queue
 
 class CustomDataParallel(torch.nn.DataParallel):
@@ -744,8 +744,8 @@ def evalvideo(net:Yolact, path:str, out_path:str=None):
 
     # All this timing code to make sure that 
     def play_video():
-        print(f"PID: {multiprocessing.current_process().pid}")
         try:
+            print(f"Thread ID: {threading.current_thread()}")
             nonlocal frame_buffer, running, video_fps, is_webcam, num_frames, frames_displayed, vid_done
 
             video_frame_times = MovingAverage(100)
@@ -827,6 +827,7 @@ def evalvideo(net:Yolact, path:str, out_path:str=None):
     # For each frame the sequence of functions it needs to go through to be processed (in reversed order)
     sequence = [prep_frame, eval_network, transform_frame]
     pool = ThreadPool(processes=len(sequence) + args.video_multiframe + 2)
+    print(f"Starting Thread Pool with {len(sequence) + args.video_multiframe + 2} threads")
     pool.apply_async(play_video)
     active_frames = [{'value': extract_frame(first_batch, i), 'idx': 0} for i in range(len(first_batch[0]))]
 

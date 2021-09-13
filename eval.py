@@ -265,6 +265,9 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
                     outfd.write(json.dumps(detection_dict) + "\n")
             else:
                 cam_id = args.video
+                outpath = "yolact_cam_" + cam_id + ".json"
+                with open(outpath, "a") as outfd:
+                    outfd.write(json.dumps(detection_dict) + "\n")
 
             frame_id += 1
 
@@ -933,6 +936,11 @@ def evaluate(net:Yolact, dataset, train_mode=False):
                     pass
             evalvideo(net, inp, out)
         else:
+            if args.save_detection_json:
+                try:
+                    os.remove("yolact_cam_" + args.video + ".json")
+                except FileNotFoundError:
+                    pass
             evalvideo(net, args.video)
         return
 

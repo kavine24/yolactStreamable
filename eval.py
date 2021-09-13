@@ -839,7 +839,6 @@ def evalvideo(net:Yolact, path:str, out_path:str=None):
     # For each frame the sequence of functions it needs to go through to be processed (in reversed order)
     sequence = [prep_frame, eval_network, transform_frame]
     pool = ThreadPool(processes=len(sequence) + args.video_multiframe + 2)
-    print(f"Starting Thread Pool with {len(sequence) + args.video_multiframe + 2} threads")
     pool.apply_async(play_video)
     active_frames = [{'value': extract_frame(first_batch, i), 'idx': 0} for i in range(len(first_batch[0]))]
 

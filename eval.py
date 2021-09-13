@@ -169,11 +169,6 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
             num_dets_to_consider = j
             break
 
-    # print(f"Classes:\t{classes.tolist()}")
-    # print(f"Class Names:\t{[cfg.dataset.class_names[classes[j]] for j in range(num_dets_to_consider)]}")
-    # print(f"Scores:\t{scores.tolist()}")
-    # print(f"Boxes:\t{boxes.tolist()}")
-
     # Quick and dirty lambda for selecting the color for a particular index
     # Also keeps track of a per-gpu color cache for maximum speed
     def get_color(j, on_gpu=None):
@@ -255,6 +250,13 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
         if args.image is not None or args.images is not None:
             with open(json_save_path, "w") as outfd:
                 json.dump(detection_dict, outfd, indent=4)
+
+        elif args.video is not None:
+            pass
+            # if ':' in args.video:
+            #     outpath = args.video.split(':')[1]
+            # else:
+            #     cam_id = args.video
 
 
 
@@ -650,6 +652,7 @@ def evalimages(net:Yolact, input_folder:str, output_folder:str):
     print('Done.')
 
 from multiprocessing.pool import ThreadPool
+import multiprocessing
 from queue import Queue
 
 class CustomDataParallel(torch.nn.DataParallel):
@@ -741,6 +744,7 @@ def evalvideo(net:Yolact, path:str, out_path:str=None):
 
     # All this timing code to make sure that 
     def play_video():
+        print(f"PID: {multiprocessing.current_process().pid}")
         try:
             nonlocal frame_buffer, running, video_fps, is_webcam, num_frames, frames_displayed, vid_done
 

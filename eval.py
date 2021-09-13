@@ -135,12 +135,21 @@ coco_cats = {} # Call prep_coco_cats to fill this
 coco_cats_inv = {}
 color_cache = defaultdict(lambda: {})
 
+frame_id = 0
+import multiprocessing
+
 def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, mask_alpha=0.45, fps_str='', json_save_path=""):
     """
     Note: If undo_transform=False then im_h and im_w are allowed to be None.
     """
 
-    print(f"Thread ID: {threading.current_thread().name}")
+    global frame_id
+    curr_lock = multiprocessing.Lock()
+
+    curr_lock.acquire()
+    print(f"Thread ID: {threading.current_thread().name} :: Frame: {frame_id}")
+    frame_id += 1
+    curr_lock.release()
 
     if undo_transform:
         img_numpy = undo_image_transformation(img, w, h)

@@ -262,7 +262,7 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
             if ':' in args.video:
                 outpath = args.video.split(':')[1] + ".json"
                 with open(outpath, "a") as outfd:
-                    outfd.write(json.dumps(detection_dict))
+                    outfd.write(json.dumps(detection_dict) + "\n")
             else:
                 cam_id = args.video
 

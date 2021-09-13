@@ -136,8 +136,6 @@ coco_cats_inv = {}
 color_cache = defaultdict(lambda: {})
 
 frame_id = 0
-import multiprocessing
-import threading
 
 def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, mask_alpha=0.45, fps_str='', json_save_path=""):
     """
@@ -145,12 +143,7 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
     """
 
     global frame_id
-    curr_lock = threading.Lock()
-
-    curr_lock.acquire(True, -1)
     print(f"Thread ID: {threading.current_thread().name} :: Frame: {frame_id}")
-    frame_id += 1
-    curr_lock.release()
 
     if undo_transform:
         img_numpy = undo_image_transformation(img, w, h)
@@ -250,7 +243,7 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
     if num_dets_to_consider == 0:
         return img_numpy
 
-    if args.save_detection_json and json_save_path != "":
+    if args.save_detection_json:
         detection_dict = {"classes": [], "class_names": [], "scores": [], "boxes": []}
         detection_dict["classes"] = []
 
@@ -260,16 +253,20 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
             detection_dict["scores"].append(scores.tolist()[j])
             detection_dict["boxes"].append(boxes.tolist()[j])
 
-        if args.image is not None or args.images is not None:
+        if (args.image is not None or args.images is not None) and json_save_path != "":
             with open(json_save_path, "w") as outfd:
                 json.dump(detection_dict, outfd, indent=4)
 
         elif args.video is not None:
-            pass
-            # if ':' in args.video:
-            #     outpath = args.video.split(':')[1]
-            # else:
-            #     cam_id = args.video
+            detection_dict["frame_id"] = frame_id
+            if ':' in args.video:
+                outpath = args.video.split(':')[1] + ".json"
+                with open(outpath, "a") as outfd:
+                    outfd.write(json.dumps(detection_dict))
+            else:
+                cam_id = args.video
+
+            frame_id += 1
 
 
 

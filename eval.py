@@ -139,6 +139,9 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
     """
     Note: If undo_transform=False then im_h and im_w are allowed to be None.
     """
+
+    print(f"Thread ID: {threading.current_thread().name}")
+
     if undo_transform:
         img_numpy = undo_image_transformation(img, w, h)
         img_gpu = torch.Tensor(img_numpy).cuda()
@@ -745,7 +748,6 @@ def evalvideo(net:Yolact, path:str, out_path:str=None):
     # All this timing code to make sure that 
     def play_video():
         try:
-            print(f"Thread ID: {threading.current_thread()}")
             nonlocal frame_buffer, running, video_fps, is_webcam, num_frames, frames_displayed, vid_done
 
             video_frame_times = MovingAverage(100)

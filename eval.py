@@ -135,10 +135,16 @@ coco_cats = {} # Call prep_coco_cats to fill this
 coco_cats_inv = {}
 color_cache = defaultdict(lambda: {})
 
+frame_id = 0
+
 def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, mask_alpha=0.45, fps_str='', json_save_path=""):
     """
     Note: If undo_transform=False then im_h and im_w are allowed to be None.
     """
+
+    global frame_id
+    # print(f"Thread ID: {threading.current_thread().name} :: Frame: {frame_id}")
+
     if undo_transform:
         img_numpy = undo_image_transformation(img, w, h)
         img_gpu = torch.Tensor(img_numpy).cuda()
@@ -168,11 +174,6 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
         if scores[j] < args.score_threshold:
             num_dets_to_consider = j
             break
-
-    # print(f"Classes:\t{classes.tolist()}")
-    # print(f"Class Names:\t{[cfg.dataset.class_names[classes[j]] for j in range(num_dets_to_consider)]}")
-    # print(f"Scores:\t{scores.tolist()}")
-    # print(f"Boxes:\t{boxes.tolist()}")
 
     # Quick and dirty lambda for selecting the color for a particular index
     # Also keeps track of a per-gpu color cache for maximum speed
@@ -242,7 +243,7 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
     if num_dets_to_consider == 0:
         return img_numpy
 
-    if args.save_detection_json and json_save_path != "":
+    if args.save_detection_json:
         detection_dict = {"classes": [], "class_names": [], "scores": [], "boxes": []}
         detection_dict["classes"] = []
 
@@ -252,9 +253,23 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
             detection_dict["scores"].append(scores.tolist()[j])
             detection_dict["boxes"].append(boxes.tolist()[j])
 
-        if args.image is not None or args.images is not None:
+        if (args.image is not None or args.images is not None) and json_save_path != "":
             with open(json_save_path, "w") as outfd:
                 json.dump(detection_dict, outfd, indent=4)
+
+        elif args.video is not None:
+            detection_dict["frame_id"] = frame_id
+            if ':' in args.video:
+                outpath = args.video.split(':')[1] + ".json"
+                with open(outpath, "a") as outfd:
+                    outfd.write(json.dumps(detection_dict) + "\n")
+            else:
+                cam_id = args.video
+                outpath = "yolact_cam_" + cam_id + ".json"
+                with open(outpath, "a") as outfd:
+                    outfd.write(json.dumps(detection_dict) + "\n")
+
+            frame_id += 1
 
 
 
@@ -650,6 +665,7 @@ def evalimages(net:Yolact, input_folder:str, output_folder:str):
     print('Done.')
 
 from multiprocessing.pool import ThreadPool
+# import threading
 from queue import Queue
 
 class CustomDataParallel(torch.nn.DataParallel):
@@ -912,8 +928,18 @@ def evaluate(net:Yolact, dataset, train_mode=False):
     elif args.video is not None:
         if ':' in args.video:
             inp, out = args.video.split(':')
+            if args.save_detection_json:
+                try:
+                    os.remove(out + ".json")
+                except FileNotFoundError:
+                    pass
             evalvideo(net, inp, out)
         else:
+            if args.save_detection_json:
+                try:
+                    os.remove("yolact_cam_" + args.video + ".json")
+                except FileNotFoundError:
+                    pass
             evalvideo(net, args.video)
         return
 

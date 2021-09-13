@@ -144,12 +144,12 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
     """
 
     global frame_id
-    curr_lock = multiprocessing.Lock()
+    # curr_lock = multiprocessing.Lock()
 
-    curr_lock.acquire()
+    # curr_lock.acquire()
     print(f"Thread ID: {threading.current_thread().name} :: Frame: {frame_id}")
     frame_id += 1
-    curr_lock.release()
+    # curr_lock.release()
 
     if undo_transform:
         img_numpy = undo_image_transformation(img, w, h)

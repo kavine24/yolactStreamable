@@ -926,6 +926,11 @@ def evaluate(net:Yolact, dataset, train_mode=False):
     elif args.video is not None:
         if ':' in args.video:
             inp, out = args.video.split(':')
+            if args.save_detection_json:
+                try:
+                    os.remove(out + ".json")
+                except FileNotFoundError:
+                    pass
             evalvideo(net, inp, out)
         else:
             evalvideo(net, args.video)

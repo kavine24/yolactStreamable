@@ -143,7 +143,7 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
     """
 
     global frame_id
-    print(f"Thread ID: {threading.current_thread().name} :: Frame: {frame_id}")
+    # print(f"Thread ID: {threading.current_thread().name} :: Frame: {frame_id}")
 
     if undo_transform:
         img_numpy = undo_image_transformation(img, w, h)

@@ -665,7 +665,7 @@ def evalimages(net:Yolact, input_folder:str, output_folder:str):
     print('Done.')
 
 from multiprocessing.pool import ThreadPool
-import threading
+# import threading
 from queue import Queue
 
 class CustomDataParallel(torch.nn.DataParallel):

@@ -264,7 +264,7 @@ def prep_display(dets_out, img, h, w, undo_transform=True, class_color=False, ma
                 with open(outpath, "a") as outfd:
                     outfd.write(json.dumps(detection_dict) + "\n")
             else:
-                cam_id = args.video
+                cam_id = args.video if "://" not in args.video else args.video.split("://")[1]
                 outpath = "yolact_cam_" + cam_id + ".json"
                 with open(outpath, "a") as outfd:
                     outfd.write(json.dumps(detection_dict) + "\n")
@@ -676,12 +676,12 @@ class CustomDataParallel(torch.nn.DataParallel):
 
 def evalvideo(net:Yolact, path:str, out_path:str=None):
     # If the path is a digit, parse it as a webcam index
-    is_webcam = path.isdigit()
+    is_webcam = path.isdigit() or "://" in path
     
     # If the input image size is constant, this make things faster (hence why we can use it in a video setting).
     cudnn.benchmark = True
     
-    if is_webcam:
+    if is_webcam and "://" not in path:
         vid = cv2.VideoCapture(int(path))
     else:
         vid = cv2.VideoCapture(path)
@@ -926,7 +926,7 @@ def evaluate(net:Yolact, dataset, train_mode=False):
         evalimages(net, inp, out)
         return
     elif args.video is not None:
-        if ':' in args.video:
+        if ':' in args.video and "://" not in args.video:
             inp, out = args.video.split(':')
             if args.save_detection_json:
                 try:
@@ -937,7 +937,7 @@ def evaluate(net:Yolact, dataset, train_mode=False):
         else:
             if args.save_detection_json:
                 try:
-                    os.remove("yolact_cam_" + args.video + ".json")
+                    os.remove("yolact_cam_" + args.video.split("://")[1] + ".json")
                 except FileNotFoundError:
                     pass
             evalvideo(net, args.video)

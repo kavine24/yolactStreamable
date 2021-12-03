@@ -29,6 +29,8 @@ from PIL import Image
 import matplotlib.pyplot as plt
 import cv2
 
+import sys
+
 def str2bool(v):
     if v.lower() in ('yes', 'true', 't', 'y', '1'):
         return True
@@ -100,7 +102,7 @@ def parse_args(argv=None):
     parser.add_argument('--images', default=None, type=str,
                         help='An input folder of images and output folder to save detected images. Should be in the format input->output.')
     parser.add_argument('--video', default=None, type=str,
-                        help='A path to a video to evaluate on. Passing in a number will use that index webcam.')
+                        help='A path to a video to evaluate on. Passing in a number will use that index webcam. Passing in a ip address and a port will try to read that stream.')
     parser.add_argument('--video_multiframe', default=1, type=int,
                         help='The number of frames to evaluate in parallel to make videos play at higher fps.')
     parser.add_argument('--score_threshold', default=0, type=float,
@@ -675,12 +677,12 @@ class CustomDataParallel(torch.nn.DataParallel):
         return sum(outputs, [])
 
 def evalvideo(net:Yolact, path:str, out_path:str=None):
-    # If the path is a digit, parse it as a webcam index
+    # If the path is a digit, or an ip, parse it as a webcam index/stream
     is_webcam = path.isdigit() or "://" in path
     
-    # If the input image size is constant, this make things faster (hence why we can use it in a video setting).
+    # ake things faster (hence why we can use it in a video setting).
     cudnn.benchmark = True
-    
+
     if is_webcam and "://" not in path:
         vid = cv2.VideoCapture(int(path))
     else:
@@ -695,7 +697,8 @@ def evalvideo(net:Yolact, path:str, out_path:str=None):
     frame_height = round(vid.get(cv2.CAP_PROP_FRAME_HEIGHT))
     
     if is_webcam:
-        num_frames = float('inf')
+        #num_frames = float('inf')
+        num_frames = round(vid.get(cv2.CAP_PROP_FRAME_COUNT))
     else:
         num_frames = round(vid.get(cv2.CAP_PROP_FRAME_COUNT))
 
@@ -709,9 +712,9 @@ def evalvideo(net:Yolact, path:str, out_path:str=None):
     vid_done = False
     frames_displayed = 0
 
-    if out_path is not None:
+    if (out_path is not None):
         out = cv2.VideoWriter(out_path, cv2.VideoWriter_fourcc(*"mp4v"), target_fps, (frame_width, frame_height))
-
+    
     def cleanup_and_exit():
         print()
         pool.terminate()
@@ -934,6 +937,18 @@ def evaluate(net:Yolact, dataset, train_mode=False):
                 except FileNotFoundError:
                     pass
             evalvideo(net, inp, out)
+        elif ':' in args.video and "://" in args.video:
+            if args.save_detection_json:
+                try:
+                    os.remove("yolact_cam_" + args.video.split("://")[1] + ".json")
+                except FileNotFoundError:
+                    pass
+            splitted = args.video.split(':')
+            evin = splitted[0] + ":" + splitted[1] + ":" + splitted[2]
+            evout = splitted[3]
+            #print(evin)
+            #print(evout)
+            evalvideo(net, evin, evout)
         else:
             if args.save_detection_json:
                 try:

@@ -43,6 +43,8 @@ COCO_CLASSES = ('person', 'bicycle', 'car', 'motorcycle', 'airplane', 'bus',
                 'toaster', 'sink', 'refrigerator', 'book', 'clock', 'vase',
                 'scissors', 'teddy bear', 'hair drier', 'toothbrush')
 
+ASL_CLASSES = ('A', 'B', 'C', 'D', 'E' ,'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
+                'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z')
 COCO_LABEL_MAP = { 1:  1,  2:  2,  3:  3,  4:  4,  5:  5,  6:  6,  7:  7,  8:  8,
                    9:  9, 10: 10, 11: 11, 13: 12, 14: 13, 15: 14, 16: 15, 17: 16,
                   18: 17, 19: 18, 20: 19, 21: 20, 22: 21, 23: 22, 24: 23, 25: 24,
@@ -128,6 +130,28 @@ dataset_base = Config({
     'label_map': None
 })
 
+asl_dataset = Config({
+    'name': 'American Sign Language Letters',
+
+    # Training images and annotations
+    'train_images': '/home/kavin/home/datasets/American Sign Language Letters/train',
+    'train_info':   '/home/kavin/home/datasets/American Sign Language Letters/train/_annotations.coco.json',
+
+    # Validation images and annotations.
+    'valid_images': '/home/kavin/home/datasets/American Sign Language Letters/valid',
+    'valid_info':   '/home/kavin/home/datasets/American Sign Language Letters/valid/_annotations.coco.json',
+
+    # Whether or not to load GT. If this is False, eval.py quantitative evaluation won't work.
+    'has_gt': True,
+
+    # A list of names for each of you classes.
+    'class_names': ASL_CLASSES,
+
+    # COCO class ids aren't sequential, so this is a bandage fix. If your ids aren't sequential,
+    # provide a map from category_id -> index in class_names + 1 (the +1 is there because it's 1-indexed).
+    # If not specified, this just assumes category ids start at 1 and increase sequentially.
+    'label_map': None
+})
 coco2014_dataset = dataset_base.copy({
     'name': 'COCO 2014',
     
